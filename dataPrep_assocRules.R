@@ -1,6 +1,3 @@
-# Set working directory
-setwd("C:/Users/tanyl/OneDrive - Nanyang Technological University/Desktop/BC2407/BC2407")
-
 library(data.table)
 library(arules)
 library(arulesViz)
@@ -37,8 +34,11 @@ inspect(head(rules1.clean, n = 10, decreasing = FALSE, by ="count"))
 # minimum count is 66
 rules2 <- apriori(data = symptomsTrans, parameter = 
                     list(minlen = 2, supp=0.01, conf = 0.1, target = "rules"))
-rule.table2 <- inspect(rules1)
+
+# Too big, takes a very long time to run. Refer to cleaned df rules2.clean.df below instead
+# rule.table2 <- inspect(rules2)
 inspect(head(rules2, n = 10, decreasing = TRUE, by ="lift"))
+
 
 # 10227 not redundant rules, min count 78
 sum(is.redundant(rules2))
