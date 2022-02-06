@@ -45,3 +45,39 @@ sum(is.redundant(rules2))
 rules2.clean = rules2[!is.redundant(rules2)]
 rules2.clean.df = as(rules2.clean, "data.frame")
 inspect(head(rules2.clean, n = 10, decreasing = FALSE, by ="count"))
+
+
+
+
+
+#--------- arulesViz plots -----------#
+
+#Extract top 20 rules from rules2.clean
+top20rules = head(rules2.clean, n = 20, decreasing = TRUE, by ="lift")
+
+# Plot rules in a graphical manner - easier to see clusters
+plot(top20rules, method = "graph",  engine = "htmlwidget")
+
+# Sometimes the clusters are not that clear
+plot(rules1.clean, method = "graph",  engine = "htmlwidget")
+
+# Grouped matrix plot with arulesViz??
+plot(top20rules, method = "grouped")
+
+# arulesViz plots source: https://cran.r-project.org/web/packages/arulesViz/vignettes/arulesViz.pdf
+
+#--------- Clustering the rules -----------#
+# documentation: 
+# https://cran.r-project.org/web/packages/cluster/cluster.pdf
+# https://www.rdocumentation.org/packages/cluster/versions/2.1.2
+
+library(cluster)
+
+# idk what this means copied from: https://stackoverflow.com/questions/51206025/how-can-i-show-exact-association-rules-belong-clusters-with-made-by-pam-method-i
+d = dissimilarity(top20rules, method = "Jaccard")
+clustering = pam(d, k=8)
+summary(clustering)
+
+d = dissimilarity(rules1.clean, method = "Jaccard")
+clustering = pam(d, k=8)
+summary(clustering)
