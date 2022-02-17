@@ -2,6 +2,8 @@ library(data.table)
 library(arules)
 library(arulesViz)
 library("reshape2")
+library(dplyr)
+library(tidyr)
 
 data = read.csv("training.csv")
 
@@ -53,7 +55,8 @@ symptomsFac[] <- lapply(symptomsFac, factor)
 symptomsTransFac <- as(symptomsFac, "transactions")  
 symptomsTransFac.df<-as(symptomsTransFac,"data.frame")
 inspect(symptomsTransFac)
-# Generating rules at support 0.1: 72,422,843 rules
+
+############## Generating rules at support 0.1: 72,422,843 rules
 rules3 <- apriori(data = symptomsTransFac, parameter = 
                     list(minlen = 2, supp=0.1, conf = 0.1, target = "rules"))
 summary(rules3)
@@ -67,7 +70,42 @@ rules3.clean = rules3[!is.redundant(rules3)]
 rules3.clean.df = as(rules3.clean, "data.frame")
 inspect(head(rules3.clean, n = 10, decreasing = FALSE, by ="count"))
 
-# Generating rules at support 0.1 and conf 0.9: 56,571,092 rules
+#Filter to find key rules
+##Filtering to find rules with 1 item in antecedent. Then  rules with a true->b true, a false->b false
+##21,952 rules have 1 item in their antecedent
+rules3.singleante.df=rules3.clean.df[!grepl(",", rules3.clean.df[["rules"]]), ]
+rules3.singleante2.df<-rules3.singleante.df %>% separate(rules, c("antecedent", "consequent"), " => ")
+
+#Formating the dataframe to atomize the rules to antecedent and consequent
+##Formating Antecedent
+rules3.singleante3.df<-rules3.singleante2.df[(grepl("TRUE", rules3.singleante2.df[["antecedent"]]) & grepl("TRUE", rules3.singleante2.df[["consequent"]])) | (grepl("FALSE", rules3.singleante2.df[["antecedent"]]) & grepl("FALSE", rules3.singleante2.df[["consequent"]])), ]
+rules3.singleante3.df<-rules3.singleante3.df %>% separate(antecedent, c("antecedent", "antecedent_logic"), "=")
+rules3.singleante3.df$antecedent=gsub("\\{","",rules3.singleante3.df$antecedent)
+rules3.singleante3.df$antecedent_logic=gsub("\\}","",rules3.singleante3.df$antecedent_logic)
+##Formating Consequent
+rules3.singleante3.df<-rules3.singleante3.df %>% separate(consequent, c("consequent", "consequent_logic"), "=")
+rules3.singleante3.df$consequent=gsub("\\{","",rules3.singleante3.df$consequent)
+rules3.singleante3.df$consequent_logic=gsub("\\}","",rules3.singleante3.df$consequent_logic)
+
+
+#Filtering to find rules with only true -> true or false->false
+key_rules1<-data.frame(matrix(ncol=9,nrow=0, dimnames=list(NULL, c("antecedent", "antecedent_logic", "consequent","consequent_logic","support","coverage","confidence","lift","count"))))
+for (i in unique(rules3.singleante3.df$antecedent)){
+  tmp.df<-rules3.singleante3.df[rules3.singleante3.df$antecedent==i,]
+  tmp.df<-subset(tmp.df,duplicated(consequent))
+  if (nrow(tmp.df)!=0){
+    for (row_no in 1:nrow(tmp.df)){
+      key_rules1 <- rbind(key_rules1, rules3.singleante3.df[(grepl(tmp.df[row_no,"antecedent"],rules3.singleante3.df[["antecedent"]]) & grepl(tmp.df[row_no,"consequent"],rules3.singleante3.df[["consequent"]])),])
+    }
+  }
+}
+key_rules1
+#Can be used to verify the values
+#rules3.singleante3.df[(grepl("yellowing_of_eyes",rules3.singleante3.df[["antecedent"]]) & grepl("loss_of_appetite",rules3.singleante3.df[["consequent"]])),]
+
+write.csv(key_rules1,"key_rules1.csv", row.names = FALSE)
+
+############### Generating rules at support 0.1 and conf 0.9: 56,571,092 rules
 rules4 <- apriori(data = symptomsTransFac, parameter = 
                     list(minlen = 2, supp=0.1, conf = 0.9, target = "rules"))
 summary(rules4)
@@ -80,8 +118,40 @@ sum(!is.redundant(rules4))
 rules4.clean = rules4[!is.redundant(rules4)]
 rules4.clean.df = as(rules4.clean, "data.frame")
 inspect(head(rules4.clean, n = 10, decreasing = FALSE, by ="count"))
-# churn_rules<-subset(rules, subset=(rhs %pin% 'rolls/buns')& support >= 0.001 & confidence>=0.65)
-# inspect(churn_rules)
+
+#Filter to find key rules
+##Filtering to find rules with 1 item in antecedent. Then  rules with a true->b true, a false->b false
+##16,749 rules have 1 item in their antecedent
+rules4.singleante.df=rules4.clean.df[!grepl(",", rules4.clean.df[["rules"]]), ]
+rules4.singleante2.df<-rules4.singleante.df %>% separate(rules, c("antecedent", "consequent"), " => ")
+
+#Formating the dataframe to atomize the rules to antecedent and consequent
+##Formating Antecedent
+rules4.singleante3.df<-rules4.singleante2.df[(grepl("TRUE", rules4.singleante2.df[["antecedent"]]) & grepl("TRUE", rules4.singleante2.df[["consequent"]])) | (grepl("FALSE", rules4.singleante2.df[["antecedent"]]) & grepl("FALSE", rules4.singleante2.df[["consequent"]])), ]
+rules4.singleante3.df<-rules4.singleante3.df %>% separate(antecedent, c("antecedent", "antecedent_logic"), "=")
+rules4.singleante3.df$antecedent=gsub("\\{","",rules4.singleante3.df$antecedent)
+rules4.singleante3.df$antecedent_logic=gsub("\\}","",rules4.singleante3.df$antecedent_logic)
+##Formating Consequent
+rules4.singleante3.df<-rules4.singleante3.df %>% separate(consequent, c("consequent", "consequent_logic"), "=")
+rules4.singleante3.df$consequent=gsub("\\{","",rules4.singleante3.df$consequent)
+rules4.singleante3.df$consequent_logic=gsub("\\}","",rules4.singleante3.df$consequent_logic)
+
+
+#Filtering to find rules with only true -> true or false->false
+key_rules2<-data.frame(matrix(ncol=9,nrow=0, dimnames=list(NULL, c("antecedent", "antecedent_logic", "consequent","consequent_logic","support","coverage","confidence","lift","count"))))
+for (i in unique(rules4.singleante3.df$antecedent)){
+  tmp.df<-rules4.singleante3.df[rules4.singleante3.df$antecedent==i,]
+  tmp.df<-subset(tmp.df,duplicated(consequent))
+  if (nrow(tmp.df)!=0){
+    for (row_no in 1:nrow(tmp.df)){
+      key_rules2 <- rbind(key_rules2, rules4.singleante3.df[(grepl(tmp.df[row_no,"antecedent"],rules4.singleante3.df[["antecedent"]]) & grepl(tmp.df[row_no,"consequent"],rules4.singleante3.df[["consequent"]])),])
+    }
+  }
+}
+key_rules2
+#Can be used to verify the values
+#rules4.singleante3.df[(grepl("yellowing_of_eyes",rules4.singleante3.df[["antecedent"]]) & grepl("loss_of_appetite",rules4.singleante3.df[["consequent"]])),]
+
 
 #--------- arulesViz plots -----------#
 
@@ -114,3 +184,22 @@ summary(clustering)
 d = dissimilarity(rules1.clean, method = "Jaccard")
 clustering = pam(d, k=8)
 summary(clustering)
+
+#----------helpful references------------#
+##How to filter and subset dataframe based on certain values in columns
+###https://stackoverflow.com/questions/40032674/filter-subset-if-a-string-contains-certain-characters-in-r
+####rules4.singleante3.df<-rules4.singleante2.df[(grepl("TRUE", rules4.singleante2.df[["antecedent"]]) & grepl("TRUE", rules4.singleante2.df[["consequent"]])) | (grepl("FALSE", rules4.singleante2.df[["antecedent"]]) & grepl("FALSE", rules4.singleante2.df[["consequent"]])), ]
+
+
+##Add a new row to a dataframe
+###https://stackoverflow.com/questions/28467068/how-to-add-a-row-to-a-data-frame-in-r
+#####rules4.singleante3.df[nrow(rules4.singleante3.df) + 1,] = c("malaise","TRUE","runny_nose","TRUE",0.1353659,0.1353659,0.1353659,0.1353659,666)
+
+##Adding one data frame to the end of another data frame in R
+###https://stackoverflow.com/questions/10358680/adding-a-one-dataframe-to-the-end-of-another-data-frame-in-r
+
+## Create empty data frame with column names by assigning a string vector
+### https://stackoverflow.com/questions/32712301/create-empty-data-frame-with-column-names-by-assigning-a-string-vector
+
+##Export data.frame to csv file
+###https://datatofish.com/export-dataframe-to-csv-in-r/
