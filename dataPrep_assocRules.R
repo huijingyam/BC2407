@@ -152,6 +152,83 @@ key_rules2
 #Can be used to verify the values
 #rules4.singleante3.df[(grepl("yellowing_of_eyes",rules4.singleante3.df[["antecedent"]]) & grepl("loss_of_appetite",rules4.singleante3.df[["consequent"]])),]
 
+#---------------Same as rules3, but limit maxlen of rules to 2-----------------
+# 21952 rules 
+rules5 = apriori(data = symptomsTransFac, parameter = 
+                   list(minlen = 2, maxlen = 2, supp=0.1, conf = 0.1, target = "rules"))
+summary(rules5)
+inspect(head(rules5, n = 10, by ="lift"))
+
+# No redundant rules by definition since no subset is possible
+sum(is.redundant(rules5))
+
+rules5.df = as(rules5, "data.frame")
+
+# Breaks the rules column into antecedent and consequent columns
+rules5.singleante.df<-rules5.df %>% separate(rules, c("antecedent", "consequent"), " => ")
+
+rules5.singleante2.df<-rules5.singleante.df %>% separate(antecedent, c("antecedent", "antecedent_logic"), "=")
+rules5.singleante2.df$antecedent=gsub("\\{","",rules5.singleante2.df$antecedent)
+rules5.singleante2.df$antecedent_logic=gsub("\\}","",rules5.singleante2.df$antecedent_logic)
+
+rules5.singleante2.df<-rules5.singleante2.df %>% separate(consequent, c("consequent", "consequent_logic"), "=")
+rules5.singleante2.df$consequent=gsub("\\{","",rules5.singleante2.df$consequent)
+rules5.singleante2.df$consequent_logic=gsub("\\}","",rules5.singleante2.df$consequent_logic)
+
+#Filtering to find rules with only true -> true or false->false
+key_rules3<-data.frame(matrix(ncol=9,nrow=0, dimnames=list(NULL, c("antecedent", "antecedent_logic", "consequent","consequent_logic","support","coverage","confidence","lift","count"))))
+for (i in unique(rules5.singleante2.df$antecedent)){
+  tmp.df<-rules5.singleante2.df[rules5.singleante2.df$antecedent==i,]
+  # dont understand
+  tmp.df<-subset(tmp.df,duplicated(consequent))
+  if (nrow(tmp.df)!=0){
+    for (row_no in 1:nrow(tmp.df)){
+      key_rules3 <- rbind(key_rules3, rules5.singleante2.df[(grepl(tmp.df[row_no,"antecedent"],rules5.singleante2.df[["antecedent"]]) & grepl(tmp.df[row_no,"consequent"],rules5.singleante2.df[["consequent"]])),])
+    }
+  }
+}
+key_rules3
+#Can be used to verify the values
+#rules5.singleante2.df[(grepl("yellowing_of_eyes",rules5.singleante2.df[["antecedent"]]) & grepl("loss_of_appetite",rules5.singleante2.df[["consequent"]])),]
+
+write.csv(key_rules3,"key_rules3.csv", row.names = FALSE)
+
+
+#---------support 0.1, confidence 0.5-----
+rules6 = apriori(data = symptomsTransFac, parameter = 
+                   list(minlen = 2, maxlen = 2, supp=0.1, conf = 0.5, target = "rules"))
+summary(rules6)
+
+rules6.df = as(rules6, "data.frame")
+
+# Breaks the rules column into antecedent and consequent columns
+rules6.singleante.df<-rules6.df %>% separate(rules, c("antecedent", "consequent"), " => ")
+
+rules6.singleante2.df<-rules6.singleante.df %>% separate(antecedent, c("antecedent", "antecedent_logic"), "=")
+rules6.singleante2.df$antecedent=gsub("\\{","",rules6.singleante2.df$antecedent)
+rules6.singleante2.df$antecedent_logic=gsub("\\}","",rules6.singleante2.df$antecedent_logic)
+
+rules6.singleante2.df<-rules6.singleante2.df %>% separate(consequent, c("consequent", "consequent_logic"), "=")
+rules6.singleante2.df$consequent=gsub("\\{","",rules6.singleante2.df$consequent)
+rules6.singleante2.df$consequent_logic=gsub("\\}","",rules6.singleante2.df$consequent_logic)
+
+rules6.singleante2.df = rules6.singleante2.df[(grepl("1", rules6.singleante2.df[["antecedent_logic"]]) & grepl("1", rules6.singleante2.df[["consequent_logic"]])) | (grepl("0", rules6.singleante2.df[["antecedent_logic"]]) & grepl("0", rules6.singleante2.df[["consequent_logic"]])), ]
+
+key_rules5<-data.frame(matrix(ncol=9,nrow=0, dimnames=list(NULL, c("antecedent", "antecedent_logic", "consequent","consequent_logic","support","coverage","confidence","lift","count"))))
+for (i in unique(rules6.singleante2.df$antecedent)){
+  tmp.df<-rules6.singleante2.df[rules6.singleante2.df$antecedent==i,]
+  tmp.df<-subset(tmp.df,duplicated(consequent))
+  if (nrow(tmp.df)!=0){
+    for (row_no in 1:nrow(tmp.df)){
+      key_rules5 <- rbind(key_rules5, rules6.singleante2.df[(grepl(tmp.df[row_no,"antecedent"],rules6.singleante2.df[["antecedent"]]) & grepl(tmp.df[row_no,"consequent"],rules6.singleante2.df[["consequent"]])),])
+    }
+  }
+}
+key_rules5
+
+write.csv(key_rules5,"key_rules5.csv", row.names = FALSE)
+write.csv(rules6.singleante2.df, "rules6.singleante2.df.csv", row.names = FALSE)
+
 
 #--------- arulesViz plots -----------#
 
