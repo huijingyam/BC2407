@@ -268,6 +268,59 @@ plot(top20rules, method = "grouped")
 # summary(clustering)
 
 #--------- Data visualisation the rules -----------#
+data.all=read.csv("Training_all.csv", stringsAsFactors = TRUE, strip.white = TRUE)
+data.all.symptoms=select(data.all,-"prognosis",-"Severity")
+data.all.symptoms
+merged_symptoms <- select(data.all, dark_urine, yellowish_skin,yellowing_of_eyes )
+summary(merged_symptoms)
+
+# correlogram to show the correlation between 3 symptoms, namely yellowing of eyes, yellowish skin and dark urine
+# dont understand why there are only 2 variables at each side
+library(ggstatsplot)
+library(ggcorrplot)
+ggstatsplot::ggcorrmat(
+  data = merged_symptoms,
+  type = "parametric", # parametric for Pearson, nonparametric for Spearman's correlation
+  colors = c("darkred", "white", "steelblue") # change default colors
+)
+
+# correlation matrix
+c = cor(merged_symptoms)
+c
+corrplot(c, method = 'color', order = 'alphabet')
+
+
+#cross-correlations between the 3 symptoms
+#install.packages("lares")
+library(lares)
+corr_cross(merged_symptoms, # name of dataset
+           max_pvalue = 0.05, # display only significant correlations (at 5% level)
+           top = 20 # display top 10 couples of variables (by correlation coefficient)
+)
+
+# correlation tests for whole dataset
+#install.packages("Hmisc")
+#library(Hmisc)
+#res <- rcorr(as.matrix(merged_symptoms)) # rcorr() accepts matrices only
+# display p-values (rounded to 3 decimals)
+#round(res$P, 3)
+# p-values are all 0, hence they are all significant
+# this can be shown by the code below
+
+library(correlation)
+#install.packages('psych')
+library('psych')
+correlation::correlation(merged_symptoms,
+                         include_factors = TRUE, method = "auto"
+)
+#rho refers to correlation coefficients between the 2 variables
+
+
+#there are many more symptoms that are highly correlated but they are not clinically proven to be associated with each other
+corr_cross(data.all.symptoms, # name of dataset
+           max_pvalue = 0.05, # display only significant correlations (at 5% level)
+           top = 20 # display top 10 couples of variables (by correlation coefficient)
+)
 
 #---------Finding the most and least frequent symptoms -----
 data.clean=read.csv("Training_clean.csv")
