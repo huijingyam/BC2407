@@ -246,21 +246,24 @@ plot(top20rules, method = "grouped")
 
 # arulesViz plots source: https://cran.r-project.org/web/packages/arulesViz/vignettes/arulesViz.pdf
 
-#--------- Clustering the rules -----------#
-# documentation: 
-# https://cran.r-project.org/web/packages/cluster/cluster.pdf
-# https://www.rdocumentation.org/packages/cluster/versions/2.1.2
+# #--------- Clustering the rules -----------#
+# # documentation: 
+# # https://cran.r-project.org/web/packages/cluster/cluster.pdf
+# # https://www.rdocumentation.org/packages/cluster/versions/2.1.2
+# 
+# library(cluster)
+# 
+# # idk what this means copied from: https://stackoverflow.com/questions/51206025/how-can-i-show-exact-association-rules-belong-clusters-with-made-by-pam-method-i
+# d = dissimilarity(top20rules, method = "Jaccard")
+# clustering = pam(d, k=8)
+# summary(clustering)
+# 
+# d = dissimilarity(rules1.clean, method = "Jaccard")
+# clustering = pam(d, k=8)
+# summary(clustering)
 
-library(cluster)
+#--------- Data visualisation the rules -----------#
 
-# idk what this means copied from: https://stackoverflow.com/questions/51206025/how-can-i-show-exact-association-rules-belong-clusters-with-made-by-pam-method-i
-d = dissimilarity(top20rules, method = "Jaccard")
-clustering = pam(d, k=8)
-summary(clustering)
-
-d = dissimilarity(rules1.clean, method = "Jaccard")
-clustering = pam(d, k=8)
-summary(clustering)
 
 #----------helpful references------------#
 ##How to filter and subset dataframe based on certain values in columns
@@ -280,3 +283,5 @@ summary(clustering)
 
 ##Export data.frame to csv file
 ###https://datatofish.com/export-dataframe-to-csv-in-r/
+
+
