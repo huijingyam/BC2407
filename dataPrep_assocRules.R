@@ -346,7 +346,7 @@ grid.arrange(p_fatigue,p_vomiting,p_high_fever,p_foul_smell_of_urine,p_nodal_ski
 
 library(janitor)
 
-data.clean=fread("Training_clean.csv", stringsAsFactors = TRUE)
+data.clean=read.csv("Training_clean.csv", stringsAsFactors = TRUE, strip.white = TRUE)
 summary(data.clean$Severity)
 
 df.AnE = data.clean[data.clean$Severity == 'A&E',]
