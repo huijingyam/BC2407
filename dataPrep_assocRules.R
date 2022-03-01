@@ -4,6 +4,11 @@ library(arulesViz)
 library("reshape2")
 library(dplyr)
 library(tidyr)
+library(corrplot)
+library(ggplot2)
+library(reshape2)
+library(gridExtra)
+library(plyr) 
 
 data = read.csv("training.csv")
 
@@ -263,6 +268,78 @@ plot(top20rules, method = "grouped")
 # summary(clustering)
 
 #--------- Data visualisation the rules -----------#
+
+#---------Finding the most and least frequent symptoms -----
+data.clean=read.csv("Training_clean.csv")
+data.clean.symptoms=data.clean[,-length(data.clean)]
+
+#Identify the most and least frequent symptoms
+##Most frequent symptoms= Fatigue, vomitting, high_fever, loss_of_apetite, nausea
+##Least frequent symptoms= foul_smell_of.urine,nodal_skin_eruptions,shivering,ulcers_on_tongue,muscle_wasting
+for(i in 1:ncol(data.clean.symptoms)){ #Factorise all the columns
+  data.clean.symptoms[,i] <- as.factor(data.clean.symptoms[,i])
+}
+data.clean.symptoms$ignore=0
+data.clean.symptoms.long=melt(data.clean.symptoms,id.vars = "ignore")
+data.clean.symptoms.long=count(data.clean.symptoms.long, c("variable", "value"))
+##Go through each row and determine if a value is zero
+row_sub = apply(data.clean.symptoms.long, 1, function(row) all(row !=0 ))
+##Subset as usual
+data.clean.symptoms.long.present=data.clean.symptoms.long[row_sub,]
+data.clean.symptoms.long.present=data.clean.symptoms.long.present[order(data.clean.symptoms.long.present$freq),]
+data.clean.symptoms.long.present
+
+
+#Visualisation of the 3 most and 3 least frequent symptoms
+## fatigue
+p_fatigue<-ggplot(data=data.clean.symptoms) + 
+  geom_bar(aes(x = fatigue)) + 
+  labs(x="Fatigue", y="Count",title= "Fatigue Count")+
+  theme_bw() +
+  scale_x_discrete(labels=c("0" = "Absent", "1" = "Presence"))
+
+
+## Vomitting
+p_vomiting<-ggplot(data=data.clean.symptoms) + 
+  geom_bar(aes(x = vomiting)) + 
+  labs(x="Vomitting", y="Count",title= "Vomitting Count")+
+  theme_bw() +
+  scale_x_discrete(labels=c("0" = "Absent", "1" = "Presence"))
+
+## High Fever
+p_high_fever<-ggplot(data=data.clean.symptoms) + 
+  geom_bar(aes(x = high_fever)) + 
+  labs(x="High fever", y="Count",title= "High fever Count")+
+  theme_bw() +
+  scale_x_discrete(labels=c("0" = "Absent", "1" = "Presence"))
+p_high_fever
+
+
+grid.arrange(p_fatigue,p_vomiting,p_high_fever, nrow = 1)
+
+## foul_smell_of_urine
+p_foul_smell_of_urine<-ggplot(data=data.clean.symptoms) + 
+  geom_bar(aes(x = foul_smell_of.urine)) + 
+  labs(x="Foul smell of urine", y="Count",title= "Foul smell of urine Count")+
+  theme_bw() +
+  scale_x_discrete(labels=c("0" = "Absent", "1" = "Presence"))
+
+## Nodal Skin Eruptions
+p_nodal_skin_eruptions<-ggplot(data=data.clean.symptoms) + 
+  geom_bar(aes(x = nodal_skin_eruptions)) + 
+  labs(x="Nodal Skin Eruptions", y="Count",title= "Nodal Skin Eruptions Count")+
+  theme_bw() +
+  scale_x_discrete(labels=c("0" = "Absent", "1" = "Presence"))
+
+## High Fever
+p_shivering<-ggplot(data=data.clean.symptoms) + 
+  geom_bar(aes(x = shivering)) + 
+  labs(x="Shivering", y="Count",title= "Shivering Count")+
+  theme_bw() +
+  scale_x_discrete(labels=c("0" = "Absent", "1" = "Presence"))
+
+grid.arrange(p_foul_smell_of_urine,p_nodal_skin_eruptions,p_shivering, nrow = 1)
+grid.arrange(p_fatigue,p_vomiting,p_high_fever,p_foul_smell_of_urine,p_nodal_skin_eruptions,p_shivering, nrow = 2)
 
 
 #----------helpful references------------#
