@@ -342,6 +342,59 @@ grid.arrange(p_foul_smell_of_urine,p_nodal_skin_eruptions,p_shivering, nrow = 1)
 grid.arrange(p_fatigue,p_vomiting,p_high_fever,p_foul_smell_of_urine,p_nodal_skin_eruptions,p_shivering, nrow = 2)
 
 
+#------------ Finding Symptoms of each Prognosis -------------#
+
+library(janitor)
+
+data.clean=fread("Training_clean.csv", stringsAsFactors = TRUE)
+summary(data.clean$Severity)
+
+df.AnE = data.clean[data.clean$Severity == 'A&E',]
+df.Poly = data.clean[data.clean$Severity == 'Polyclinic',]
+df.NoMed = data.clean[data.clean$Severity == 'No_Medical_Attention_Req',]
+
+#No empty columns - wide spread of symptoms across all categories
+df.AnE = remove_empty(df.AnE, which="cols")
+df.Poly = remove_empty(data.clean[data.clean$Severity == 'Polyclinic',], which="cols")
+df.NoMed = remove_empty(data.clean[data.clean$Severity == 'No_Medical_Attention_Req',], which="cols")
+
+data.all = read.csv("Training_all.csv", stringsAsFactors = TRUE, strip.white = TRUE)
+data.small = subset(data.all, select = -c(yellowish_skin,yellowing_of_eyes, dark_urine, Severity))
+
+getFreq = function(data){
+  # removes prognosis from list of columns names to get symptoms
+  symptoms = colnames(data)[-length(colnames(data))]
+
+  count = c()
+  for(s in symptoms){
+    count = c(count, sum(data$s == 1))
+  }
+  output = data.frame(symptoms = symptoms, count = count)
+  return(output) 
+}
+
+data.fungal = data.small[data.small$prognosis == "Fungal infection",]
+data.fungal = data.fungal[, colSums(data.fungal != 0) > 0]
+fungal.freq = getFreq(data.fungal)
+
+data.allergy = data.small[data.small$prognosis == "Allergy",]
+data.allergy = data.allergy[, colSums(data.allergy != 0) > 0]
+allergy.freq = getFreq(data.allergy)
+
+data.gastro = data.small[data.small$prognosis == "Gastroenteritis",]
+data.gastro = data.gastro[, colSums(data.gastro != 0) > 0]
+gastro.freq = getFreq(data.gastro)
+
+# why doesn't this one work?
+data.hepB = data.small[data.small$prognosis == "Hepatitis B",]
+data.hepB = data.hepB[, colSums(data.hepB != 0) > 0]
+hepB.freq = getFreq(data.hepB)
+
+# In general most diseases have 4-10 symptoms
+# Each patient with the disease has most or all symptoms,
+# so we should be able to get an accurate prediction
+
+
 #----------helpful references------------#
 ##How to filter and subset dataframe based on certain values in columns
 ###https://stackoverflow.com/questions/40032674/filter-subset-if-a-string-contains-certain-characters-in-r
